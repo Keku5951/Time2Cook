@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time2Cook – Interactive Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+  :root { --ink:#2b2b2b; --paper:#fbf9f6; --card:#fff; --line:#444; --accent:#e8743b; --muted:#777; --fs:18px; }
+  body.dark { --ink:#eee; --paper:#222; --card:#2d2d2d; --line:#bbb; --muted:#aaa; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         background:#e9e5df; font-family:'Patrick Hand','Comic Sans MS',cursive; color:var(--ink); gap:10px; padding:10px; }
+  .hint { font-size:16px; color:#555; text-align:center; max-width:420px; }
+  .phone { width:380px; height:740px; background:var(--paper); border:3px solid var(--line); border-radius:32px;
+           display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+  header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 10px;
+           border-bottom:2px solid var(--line); min-height:64px; font-size:calc(var(--fs) + 8px); }
+  header .title { flex:1; text-align:center; }
+  header.home .title { text-align:left; }
+  .icon-btn { background:none; border:none; font-size:26px; cursor:pointer; color:var(--ink); font-family:inherit; padding:4px 8px; }
+  main { flex:1; overflow-y:auto; padding:14px 16px; font-size:var(--fs); }
+  .tagline { font-size:calc(var(--fs) + 2px); color:var(--muted); margin:0 0 10px 4px; }
+  .country-row { display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+  .country-row label { margin:0; white-space:nowrap; }
+  .country-row select { flex:1; cursor:pointer; }
+  .card { display:flex; align-items:center; gap:14px; background:var(--card); border:2px solid var(--line); border-radius:16px;
+          padding:14px; margin-bottom:14px; cursor:pointer; width:100%; text-align:left; font-family:inherit; color:var(--ink); font-size:inherit; transition:transform .1s, background .15s; }
+  .card:hover { transform:translateY(-2px); background:#fff3e8; }
+  body.dark .card:hover { background:#3a3a3a; }
+  .card .emoji { font-size:48px; width:64px; text-align:center; }
+  .card .name { font-size:calc(var(--fs) + 6px); line-height:1.1; }
+  .card .sub { color:var(--muted); font-size:var(--fs); }
+  .card .chev { margin-left:auto; font-size:28px; }
+  .badge { font-size:13px; border:1px solid var(--accent); color:var(--accent); border-radius:8px; padding:0 6px; margin-left:4px; white-space:nowrap; }
+  nav { display:flex; justify-content:space-around; border-top:2px solid var(--line); padding:8px 0 12px; background:var(--paper); }
+  nav button { background:none; border:none; font-family:inherit; font-size:14px; color:var(--ink); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 6px; }
+  nav button span.i { font-size:24px; }
+  nav button.active { text-decoration:underline; font-weight:bold; color:var(--accent); }
+  .search { width:100%; padding:10px 14px; border:2px solid var(--line); border-radius:14px; font-family:inherit; font-size:var(--fs); margin-bottom:12px; background:var(--card); color:var(--ink); }
+  .hero { font-size:110px; text-align:center; background:var(--card); border:2px solid var(--line); border-radius:20px; margin-bottom:10px; }
+  .meta { display:flex; gap:14px; margin:6px 0 10px; font-size:calc(var(--fs) + 1px); flex-wrap:wrap; }
+  h3 { margin:10px 0 4px; font-size:calc(var(--fs) + 5px); text-decoration:underline; text-decoration-thickness:1px; }
+  ul, ol { margin:0 0 6px 4px; padding-left:22px; line-height:1.5; }
+  ol li { cursor:pointer; } ol li.done { text-decoration:line-through; color:var(--muted); }
+  .save { width:100%; padding:14px; border:2px solid var(--line); border-radius:16px; background:#ddd; font-family:inherit; font-size:calc(var(--fs) + 4px); cursor:pointer; color:#222; margin-top:8px; }
+  .save.saved, .save.primary { background:var(--accent); color:#fff; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:14px 6px; border-bottom:1px dashed var(--line); }
+  .toggle { width:52px; height:28px; border:2px solid var(--line); border-radius:20px; background:#ccc; position:relative; cursor:pointer; }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; border:2px solid var(--line); transition:.2s; }
+  .toggle.on { background:var(--accent); } .toggle.on::after { left:26px; }
+  .seg button { font-family:inherit; font-size:16px; border:2px solid var(--line); background:var(--card); color:var(--ink); padding:4px 10px; cursor:pointer; }
+  .seg button.on { background:var(--accent); color:#fff; }
+  .empty { text-align:center; color:var(--muted); margin-top:40px; }
+  .toast { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:8px 16px; border-radius:20px; font-size:16px; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; }
+  .toast.show { opacity:1; }
+  .danger { color:#c0392b; border:2px solid #c0392b; background:none; border-radius:12px; padding:6px 12px; font-family:inherit; font-size:16px; cursor:pointer; }
+  /* form */
+  label { display:block; margin:10px 0 4px; }
+  input, select, textarea { width:100%; padding:8px 12px; border:2px solid var(--line); border-radius:12px; font-family:inherit; font-size:var(--fs); background:var(--card); color:var(--ink); }
+  textarea { min-height:80px; resize:vertical; }
+  .two { display:flex; gap:10px; } .two > div { flex:1; }
+  .help { font-size:14px; color:var(--muted); }
+  .err { color:#c0392b; font-size:15px; min-height:18px; margin-top:6px; }
+  .mine { display:flex; align-items:center; gap:8px; }
+  .mine .card { margin-bottom:0; flex:1; }
+  .mine-wrap { margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="hint">Time2Cook prototype — pick a country, then a time category → recipe → Save.
+  Use 📖 Catalogue to add your own recipe.</div>
+<div class="phone" id="phone">
+  <div id="screen" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
+  <nav id="nav"></nav>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const CATS = {
+  long:  { name:'Long Cooking',  range:'> 60 min',    emoji:'🍲' },
+  quick: { name:'Quick Cooking', range:'10 – 30 min', emoji:'⏱️' },
+  none:  { name:'No Cooking',    range:'0 – 10 min',  emoji:'🥗' }
+};
+const COUNTRIES = {
+  all:    { name:'All',    flag:'🌍' },
+  sweden: { name:'Sweden', flag:'🇸🇪' },
+  india:  { name:'India',  flag:'🇮🇳' },
+  italy:  { name:'Italy',  flag:'🇮🇹' },
+};
+
+// Built-in recipes, grouped by country, each sorted into a time category
+const R = (id, country, cat, name, emoji, prep, cook, ing, steps) =>
+  ({ id, country, cat, name, emoji, prep, cook, total:prep+cook, ing, steps });
+const BUILTIN = [
+  // ---- Sweden ----
+  R(101,'sweden','long','Kalops (Beef Stew)','🥘',20,120,['Beef chuck','Onions','Allspice & bay leaf','Carrots','Beef stock'],
+    ['Brown the beef in butter.','Add onions, spices and stock.','Simmer slowly for 2 hours.','Serve with boiled potatoes and pickled beets.']),
+  R(102,'sweden','long','Ärtsoppa (Pea Soup)','🍵',15,90,['Dried yellow peas','Onion','Thyme & marjoram','Salted pork (optional)'],
+    ['Soak peas overnight.','Simmer peas with onion and herbs.','Cook until soft, about 90 min.','Serve with mustard.']),
+  R(103,'sweden','long','Kanelbullar (Cinnamon Buns)','🥐',40,80,['Flour','Milk & yeast','Butter','Cinnamon & sugar','Cardamom'],
+    ['Make the yeast dough and let it rise.','Roll out and spread cinnamon butter.','Roll, cut and rise again.','Bake until golden.']),
+  R(104,'sweden','quick','Köttbullar (Meatballs)','🧆',10,20,['Minced meat','Breadcrumbs','Egg','Onion','Cream sauce'],
+    ['Mix meat, breadcrumbs, egg and onion.','Roll into small balls.','Fry until browned.','Serve with cream sauce and lingonberry.']),
+  R(105,'sweden','quick','Pyttipanna (Hash)','🍳',5,20,['Potatoes','Sausage or ham','Onion','Egg','Pickled beets'],
+    ['Dice potatoes, meat and onion.','Fry until crispy.','Top with a fried egg.']),
+  R(106,'sweden','quick','Raggmunk (Potato Pancake)','🥞',10,15,['Grated potatoes','Flour & milk','Egg','Lingonberry jam'],
+    ['Mix potatoes with batter.','Fry thin pancakes in butter.','Serve with lingonberries.']),
+  R(107,'sweden','none','Räksmörgås (Shrimp Sandwich)','🥪',10,0,['Rye bread','Peeled shrimp','Egg (pre-boiled)','Mayonnaise','Dill & lemon'],
+    ['Butter the bread and add lettuce.','Pile on shrimp and egg slices.','Garnish with mayo, dill and lemon.']),
+  R(108,'sweden','none','Knäckebröd with Gravlax','🐟',5,0,['Crispbread','Gravlax (cured salmon)','Mustard-dill sauce','Cream cheese'],
+    ['Spread cream cheese on crispbread.','Add slices of gravlax.','Drizzle mustard-dill sauce.']),
+  R(109,'sweden','none','Filmjölk with Müsli','🥣',3,0,['Filmjölk (sour milk)','Müsli','Berries'],
+    ['Pour filmjölk into a bowl.','Top with müsli and berries.']),
+  // ---- India ----
+  R(201,'india','long','Veg Biryani','🍛',25,65,['Basmati rice','Mixed vegetables','Yogurt','Biryani spices'],
+    ['Marinate vegetables.','Par-boil the rice.','Layer and steam on low heat.']),
+  R(202,'india','long','Dal Makhani','🫘',20,100,['Black lentils','Kidney beans','Butter & cream','Tomato','Garam masala'],
+    ['Soak lentils overnight.','Pressure-cook until soft.','Simmer with tomato, butter and spices.','Finish with cream.']),
+  R(203,'india','long','Chicken Curry','🍗',20,50,['Chicken','Onion & tomato','Ginger-garlic paste','Curry spices'],
+    ['Fry onions until golden.','Add ginger-garlic and spices.','Add chicken and tomato.','Simmer until tender.']),
+  R(204,'india','quick','Veg Fried Rice','🍚',10,10,['Rice','Vegetables','Soy sauce','Spices'],
+    ['Cook the rice.','Add vegetables.','Mix well and serve.']),
+  R(205,'india','quick','Masala Omelette','🍳',5,10,['Eggs','Onion & chilli','Coriander','Turmeric & salt'],
+    ['Whisk eggs with spices.','Add onion, chilli and coriander.','Fry, fold and serve.']),
+  R(206,'india','quick','Poha','🍲',5,15,['Flattened rice','Onion','Peanuts','Mustard seeds & curry leaves'],
+    ['Rinse the poha.','Temper mustard seeds and curry leaves.','Add onion, peanuts and poha.','Finish with lemon.']),
+  R(207,'india','none','Kachumber Salad','🥗',10,0,['Cucumber','Tomato','Onion','Lemon & chaat masala'],
+    ['Chop vegetables finely.','Add lemon juice and chaat masala.','Toss and serve.']),
+  R(208,'india','none','Mango Lassi','🥭',5,0,['Mango pulp','Yogurt','Milk','Cardamom'],
+    ['Blend everything until smooth.','Serve chilled.']),
+  R(209,'india','none','Bhel Puri','🍿',10,0,['Puffed rice','Sev','Onion & tomato','Tamarind chutney'],
+    ['Mix puffed rice with vegetables.','Add chutneys.','Top with sev and serve at once.']),
+  // ---- Italy ----
+  R(301,'italy','long','Baked Lasagna','🧀',30,70,['Lasagna sheets','Tomato sauce','Ricotta','Mozzarella'],
+    ['Make the sauce.','Layer sheets, sauce and cheese.','Bake until golden.']),
+  R(302,'italy','long','Ragù alla Bolognese','🍝',20,150,['Minced beef','Soffritto (onion, carrot, celery)','Tomato','Red wine','Milk'],
+    ['Cook the soffritto.','Brown the meat.','Add wine, tomato and milk.','Simmer gently 2–3 hours.']),
+  R(303,'italy','long','Minestrone','🥣',20,50,['Mixed vegetables','Beans','Small pasta','Tomato','Parmesan'],
+    ['Sauté vegetables.','Add tomato, beans and water.','Simmer, then add pasta.','Serve with Parmesan.']),
+  R(304,'italy','quick','Pasta al Pomodoro','🍝',5,20,['Pasta','Tomato sauce','Garlic','Olive oil','Basil'],
+    ['Boil the pasta.','Heat sauce with garlic.','Combine, add basil and serve.']),
+  R(305,'italy','quick','Panini','🥪',10,5,['Ciabatta','Mozzarella','Tomato','Pesto'],
+    ['Spread pesto on bread.','Add mozzarella and tomato.','Toast in a pan until crispy.']),
+  R(306,'italy','quick','Frittata','🍳',5,15,['Eggs','Spinach','Parmesan','Onion'],
+    ['Sauté onion and spinach.','Pour in beaten eggs and cheese.','Cook until set.']),
+  R(307,'italy','none','Insalata Caprese','🍅',5,0,['Tomatoes','Mozzarella','Basil','Olive oil'],
+    ['Slice tomatoes and mozzarella.','Layer with basil.','Drizzle olive oil, add salt.']),
+  R(308,'italy','none','Panzanella','🥗',10,0,['Day-old bread','Tomatoes','Cucumber','Red onion','Vinegar'],
+    ['Tear bread into pieces.','Mix with chopped vegetables.','Dress with oil and vinegar.']),
+  R(309,'italy','none','Macedonia (Fruit Salad)','🍓',5,0,['Seasonal fruits','Lemon juice','Sugar'],
+    ['Chop the fruit.','Add lemon and a little sugar.','Chill and serve.']),
+];
+
+// Sort a time into a category (used for user recipes): ≤10 min & no cooking → No Cooking, ≤30 → Quick, else Long
+const autoCat = (prep, cook) => (cook === 0 && prep <= 10) ? 'none' : (prep + cook <= 30 ? 'quick' : 'long');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---- state (persisted in browser) ----
+const store = JSON.parse(localStorage.getItem('t2c') || '{}');
+const state = {
+  favs: store.favs || [],
+  dark: store.dark || false,
+  size: store.size || 18,
+  country: store.country || 'all',
+  mine: store.mine || [],                // user-added recipes (Catalogue)
+  tab: 'home', stack: [{ view:'home' }], query:'', searchOpen:false,
+};
+const persist = () => localStorage.setItem('t2c', JSON.stringify({
+  favs:state.favs, dark:state.dark, size:state.size, country:state.country, mine:state.mine }));
+const $ = id => document.getElementById(id);
+const cur = () => state.stack[state.stack.length-1];
+const allRecipes = () => [...BUILTIN, ...state.mine];
+const byId = id => allRecipes().find(r => r.id === id);
+const isFav = id => state.favs.includes(id);
+const inCountry = r => state.country === 'all' || r.country === state.country;
+
+function go(view, extra={}) { state.stack.push({ view, ...extra }); state.searchOpen=false; state.query=''; render(); }
+function back() { if (state.stack.length>1) state.stack.pop(); state.searchOpen=false; state.query=''; render(); }
+function tab(t) { state.tab=t; state.stack=[{ view:t }]; state.searchOpen=false; state.query=''; render(); }
+function toast(msg) { const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),1500); }
+function setCountry(c) { state.country=c; persist(); render(); }
+function toggleFav(id) {
+  if (isFav(id)) { state.favs = state.favs.filter(x=>x!==id); toast('Removed from Favorites'); }
+  else { state.favs.push(id); toast('Saved to Favorites ❤'); }
+  persist(); render();
+}
+
+const recipeCard = r => `
+  <button class="card" onclick="go('recipe',{id:${r.id}})">
+    <div class="emoji">${esc(r.emoji)}</div>
+    <div><div class="name">${esc(r.name)}</div>
+      <div class="sub">🕒 ${r.total} min · ${COUNTRIES[r.country]?.flag || ''}${r.mine?'<span class="badge">My recipe</span>':''}</div></div>
+    <div class="chev">›</div>
+  </button>`;
+
+// Country dropdown (scales to any number of countries)
+const countryChips = () => `<div class="country-row">
+  <label for="country">📍 Country:</label>
+  <select id="country" onchange="setCountry(this.value)">
+    ${Object.entries(COUNTRIES).map(([k,c])=>`<option value="${k}" ${state.country===k?'selected':''}>${c.flag} ${c.name}${k==='all'?' countries':''}</option>`).join('')}
+  </select></div>`;
+
+const views = {
+  home() {
+    return `<header class="home"><span class="title">👨‍🍳 Time2Cook</span>
+      <button class="icon-btn" onclick="tab('favs')" aria-label="Favorites">${state.favs.length?'❤️':'🤍'}</button></header>
+      <main><p class="tagline">Recipes that fit your time!</p>
+      ${countryChips()}
+      ${Object.entries(CATS).map(([k,c])=>{
+        const n = allRecipes().filter(r=>r.cat===k && inCountry(r)).length;
+        return `<button class="card" onclick="go('list',{cat:'${k}'})">
+          <div class="emoji">${c.emoji}</div>
+          <div><div class="name">${c.name}</div><div class="sub">(${c.range}) · ${n} recipe${n===1?'':'s'}</div></div>
+        </button>`;}).join('')}
+      </main>`;
+  },
+  list() {
+    const c = CATS[cur().cat], co = COUNTRIES[state.country];
+    const q = state.query.trim().toLowerCase();
+    const items = allRecipes().filter(r=>r.cat===cur().cat && inCountry(r) && r.name.toLowerCase().includes(q))
+                              .sort((a,b)=>a.total-b.total);
+    return `<header><button class="icon-btn" onclick="back()" aria-label="Back">←</button>
+      <span class="title">${c.name}</span>
+      <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">🔍</button></header>
+      <main>${countryChips()}
+      ${state.searchOpen?`<input class="search" id="q" placeholder="Search ${co.name==='All'?'all':co.name} recipes…" value="${esc(state.query)}" oninput="onSearch(this.value)">`:''}
+      ${items.length ? items.map(recipeCard).join('') : `<div class="empty">No ${c.name.toLowerCase()} recipes for ${co.flag} ${co.name} yet.<br>Add one in 📖 Catalogue!</div>`}</main>`;
+  },
+  recipe() {
+    const r = byId(cur().id);
+    if (!r) { back(); return ''; }
+    const done = cur().done || (cur().done = []);
+    const co = COUNTRIES[r.country];
+    return `<header><button class="icon-btn" onclick="back()" aria-label="Back">←</button><span class="title"></span>
+      <button class="icon-btn" onclick="toggleFav(${r.id})" aria-label="Favorite">${isFav(r.id)?'❤️':'🤍'}</button></header>
+      <main>
+        <div style="text-align:center;font-size:calc(var(--fs) + 10px)">${esc(r.name)}</div>
+        <div style="text-align:center;color:var(--muted)">${co.flag} ${co.name} · ${CATS[r.cat].name}${r.mine?' <span class="badge">My recipe</span>':''}</div>
+        <div class="hero">${esc(r.emoji)}</div>
+        <div class="meta"><span>🕒 Prep: ${r.prep} min</span>|<span>Cook: ${r.cook} min</span></div>
+        <h3>Ingredients:</h3><ul>${r.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
+        <h3>Steps:</h3><ol>${r.steps.map((s,i)=>`<li class="${done.includes(i)?'done':''}" onclick="toggleStep(${i})">${esc(s)}</li>`).join('')}</ol>
+        <div style="font-size:14px;color:var(--muted)">Tap a step to tick it off.</div>
+        <button class="save ${isFav(r.id)?'saved':''}" onclick="toggleFav(${r.id})">${isFav(r.id)?'🔖 Saved ✓':'🔖 Save Recipe'}</button>
+      </main>`;
+  },
+  favs() {
+    const items = allRecipes().filter(r=>isFav(r.id));
+    return `<header><span class="title">Favorites</span></header>
+      <main>${items.length ? items.map(recipeCard).join('') :
+        '<div class="empty">🤍<br>No saved recipes yet.<br>Open a recipe and tap “Save Recipe”.</div>'}</main>`;
+  },
+  catalogue() {
+    return `<header><span class="title">My Catalogue</span></header>
+      <main>
+        <button class="save primary" style="margin:0 0 14px" onclick="go('add')">➕ Add your own recipe</button>
+        ${state.mine.length ? state.mine.map(r=>`<div class="mine-wrap"><div class="mine">${recipeCard(r)}
+            <button class="danger" onclick="delMine(${r.id})" aria-label="Delete ${esc(r.name)}">🗑</button></div></div>`).join('')
+          : '<div class="empty">📖<br>Your catalogue is empty.<br>Add a recipe and Time2Cook will sort it into Long, Quick or No Cooking for you.</div>'}
+      </main>`;
+  },
+  add() {
+    const opt = (o, sel) => Object.entries(o).filter(([k])=>k!=='all')
+      .map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v.flag||v.emoji} ${v.name}</option>`).join('');
+    return `<header><button class="icon-btn" onclick="back()" aria-label="Back">←</button>
+      <span class="title">Add Recipe</span><span style="width:40px"></span></header>
+      <main><form id="addForm" onsubmit="saveMine(event)">
+        <label for="f-name">Recipe name *</label>
+        <input id="f-name" required maxlength="40" placeholder="e.g. Grandma's Dal">
+        <div class="two">
+          <div><label for="f-country">Country</label>
+            <select id="f-country">${opt(COUNTRIES, state.country==='all'?'india':state.country)}</select></div>
+          <div><label for="f-emoji">Icon</label>
+            <select id="f-emoji">${['🍲','🍛','🍝','🥗','🥪','🍳','🍚','🥘','🍰','🥣','🍕','🌮'].map(e=>`<option>${e}</option>`).join('')}</select></div>
+        </div>
+        <div class="two">
+          <div><label for="f-prep">Prep (min) *</label><input id="f-prep" type="number" min="0" max="600" required value="10" oninput="previewCat()"></div>
+          <div><label for="f-cook">Cook (min) *</label><input id="f-cook" type="number" min="0" max="600" required value="15" oninput="previewCat()"></div>
+        </div>
+        <div class="help" id="f-cat-preview"></div>
+        <label for="f-ing">Ingredients * <span class="help">(one per line)</span></label>
+        <textarea id="f-ing" required placeholder="Rice&#10;Vegetables&#10;Spices"></textarea>
+        <label for="f-steps">Steps * <span class="help">(one per line)</span></label>
+        <textarea id="f-steps" required placeholder="Cook the rice.&#10;Add vegetables.&#10;Serve."></textarea>
+        <div class="err" id="f-err" role="alert"></div>
+        <button class="save primary" type="submit">💾 Add to Catalogue</button>
+      </form></main>`;
+  },
+  settings() {
+    return `<header><span class="title">Settings</span></header>
+      <main>
+        <div class="row"><span>🌙 Dark mode</span><div class="toggle ${state.dark?'on':''}" onclick="setDark()" role="switch" aria-checked="${state.dark}"></div></div>
+        <div class="row"><span>🔠 Text size</span>
+          <span class="seg">${[[16,'S'],[18,'M'],[21,'L']].map(([v,l])=>`<button class="${state.size===v?'on':''}" onclick="setSize(${v})">${l}</button>`).join('')}</span></div>
+        <div class="row"><span>🗑 Saved recipes (${state.favs.length})</span><button class="danger" onclick="clearFavs()">Clear</button></div>
+        <div class="row"><span>ℹ️ Time2Cook v0.2 prototype</span></div>
+      </main>`;
+  }
+};
+
+// ---- Catalogue actions ----
+function previewCat() {
+  const p = +$('f-prep').value || 0, c = +$('f-cook').value || 0, k = autoCat(p, c);
+  $('f-cat-preview').textContent = `Total ${p + c} min → will be sorted into ${CATS[k].emoji} ${CATS[k].name}`;
+}
+function saveMine(e) {
+  e.preventDefault();
+  const lines = id => $(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const name = $('f-name').value.trim(), prep = +$('f-prep').value, cook = +$('f-cook').value;
+  const ing = lines('f-ing'), steps = lines('f-steps');
+  if (!name || !ing.length || !steps.length) { $('f-err').textContent = 'Please fill in name, ingredients and steps.'; return; }
+  const r = { id: Date.now(), mine:true, country:$('f-country').value, cat:autoCat(prep,cook), name,
+              emoji:$('f-emoji').value, prep, cook, total:prep+cook, ing, steps };
+  state.mine.push(r); persist();
+  state.stack = [{ view:'catalogue' }];
+  render();
+  toast(`Added to ${CATS[r.cat].name} · ${COUNTRIES[r.country].flag}`);
+}
+function delMine(id) {
+  const r = byId(id);
+  if (!confirm(`Delete "${r.name}" from your catalogue?`)) return;
+  state.mine = state.mine.filter(x=>x.id!==id); state.favs = state.favs.filter(x=>x!==id);
+  persist(); render(); toast('Recipe deleted');
+}
+
+function toggleSearch(){ state.searchOpen=!state.searchOpen; if(!state.searchOpen) state.query=''; render(); const q=$('q'); if(q) q.focus(); }
+function onSearch(v){ state.query=v; const pos=v.length; render(); const q=$('q'); q.focus(); q.setSelectionRange(pos,pos); }
+function toggleStep(i){ const d=cur().done; d.includes(i)? d.splice(d.indexOf(i),1) : d.push(i); render(); }
+function setDark(){ state.dark=!state.dark; persist(); render(); }
+function setSize(v){ state.size=v; persist(); render(); }
+function clearFavs(){ state.favs=[]; persist(); toast('Favorites cleared'); render(); }
+
+function render() {
+  document.body.classList.toggle('dark', state.dark);
+  document.documentElement.style.setProperty('--fs', state.size+'px');
+  $('screen').innerHTML = views[cur().view]();
+  $('nav').innerHTML = [['home','🏠','Home'],['favs','🤍','Favorites'],['catalogue','📖','Catalogue'],['settings','⚙️','Settings']]
+    .map(([k,i,l])=>`<button class="${state.tab===k?'active':''}" onclick="tab('${k}')"><span class="i">${i}</span>${l}</button>`).join('');
+  if (cur().view === 'add') previewCat();
+  const m = document.querySelector('main'); if (m) m.scrollTop = 0;
+}
+render();
+</script>
+</body>
+</html>
